@@ -1,0 +1,34 @@
+{
+  "name": "NSMenuExample",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "react-native start",
+    "ts:check": "tsc --noEmit",
+    "pretty": "prettier --write *.js *.json src",
+    "build:macos": "LOGFILE=/tmp/rnnsmenu-example-build-$(date +%s).log; react-native build-macos --mode Debug > $LOGFILE 2>&1 && echo \"BUILD SUCCEEDED — $LOGFILE\" || (echo \"BUILD FAILED — $LOGFILE\"; exit 1)",
+    "run:macos": "react-native run-macos --mode Debug"
+  },
+  "dependencies": {
+    "react": "19.1.4",
+    "react-native": "0.81.6",
+    "react-native-nsmenu": "file:..",
+    "react-native-macos": "^0.81.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.3",
+    "@babel/runtime": "^7.25.0",
+    "@react-native-community/cli": "20.0.0",
+    "@react-native-community/cli-platform-ios": "20.0.0",
+    "@react-native/babel-preset": "0.81.2",
+    "@react-native/metro-config": "0.81.2",
+    "@react-native/typescript-config": "0.81.2",
+    "@types/react": "^19.1.0",
+    "prettier": "3.x",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
