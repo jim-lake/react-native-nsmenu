@@ -5,8 +5,7 @@ import type { EventEmitter } from 'react-native/Libraries/Types/CodegenTypes';
 export type MenuItemId = string;
 export type MenuId = string;
 
-export interface MenuItem {
-  menuItemId: MenuItemId;
+export interface MenuItemUpdate {
   title: string;
   key?: string;
   keyModifiers?: Array<'shift' | 'control' | 'option' | 'command'>;
@@ -16,22 +15,17 @@ export interface MenuItem {
   separator?: boolean;
   submenu?: Object;
 }
-
+export interface MenuItem extends MenuItemUpdate {
+  menuItemId: MenuItemId;
+}
 export interface Menu {
   menuId: MenuId;
   title: string;
   items: MenuItem[];
 }
-
-export interface MenuItemUpdate {
+export interface MenuUpdate {
   title?: string;
-  key?: string;
-  keyModifiers?: Array<'shift' | 'control' | 'option' | 'command'>;
-  enabled?: boolean;
-  hidden?: boolean;
-  state?: 'off' | 'on' | 'mixed';
-  separator?: boolean;
-  submenu?: Object;
+  items?: MenuItemUpdate[];
 }
 
 export interface MenuItemActionPayload {
@@ -40,14 +34,18 @@ export interface MenuItemActionPayload {
 }
 
 export interface Spec extends TurboModule {
-  getMainMenu(): Promise<Object>;
-  setMainMenu(menu: Object): Promise<void>;
+  getMainMenu(): Promise<Menu>;
+  setMainMenu(menu: Menu): Promise<void>;
+  updateMenu(menuId: MenuId, props: MenuUpdate): Promise<void>;
 
-  addMenuItem(parentId: MenuId, item: Object, index?: number): Promise<void>;
+  addMenuItem(parentId: MenuId, item: MenuItem, index?: number): Promise<void>;
   updateMenuItem(menuItemId: MenuItemId, props: MenuItemUpdate): Promise<void>;
   removeMenuItem(menuItemId: MenuItemId): Promise<void>;
 
   readonly onMenuItemAction: EventEmitter<MenuItemActionPayload>;
+  readonly onMenuWillOpen: EventEmitter<MenuId>;
+  readonly onMenuDidClose: EventEmitter<MenuId>;
+  readonly onMenuWillHighlightItem: EventEmitter<MenuItemActionPayload>;
 }
 
 export const nativeModule =
