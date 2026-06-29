@@ -5,6 +5,23 @@ import type { Menu, MenuItem } from 'react-native-nsmenu';
 import { addLine } from './log_store';
 import { LogBox } from './components/log_box';
 
+const WORDS = [
+  'Alpha',
+  'Bravo',
+  'Charlie',
+  'Delta',
+  'Echo',
+  'Foxtrot',
+  'Golf',
+  'Hotel',
+  'India',
+  'Juliet',
+  'Kilo',
+  'Lima',
+];
+const pick = () => WORDS[Math.floor(Math.random() * WORDS.length)]!;
+const randTitle = () => `${pick()} ${pick()}`;
+
 function MenuItemRow({ item, depth = 0 }: { item: MenuItem; depth?: number }) {
   if (item.separator) {
     return <View style={[styles.separator, { marginLeft: depth * 16 }]} />;
@@ -41,6 +58,9 @@ function MenuItemRow({ item, depth = 0 }: { item: MenuItem; depth?: number }) {
           </Text>
           {item.state === 'on' && <Text style={styles.check}> ✓</Text>}
           {item.state === 'mixed' && <Text style={styles.check}> −</Text>}
+          {item.toolTip && <Text style={styles.tip}> 💬</Text>}
+          {item.hidden && <Text style={styles.tip}> 👁‍🗨</Text>}
+          {item.alternate && <Text style={styles.tip}> ⎇</Text>}
         </View>
         {shortcut ? <Text style={styles.shortcut}>{shortcut}</Text> : null}
       </View>
@@ -78,7 +98,6 @@ export default function App() {
 
   useEffect(() => {
     fetchMenu();
-
     const itemSub = NSMenu.onMenuItemAction((e) => {
       addLine(`menuItemAction: ${e.menuItemId} in ${e.menuId}`);
     });
@@ -91,7 +110,6 @@ export default function App() {
     const highlightSub = NSMenu.onMenuWillHighlightItem((e) => {
       addLine(`highlightItem: ${e.menuItemId} in ${e.menuId}`);
     });
-
     return () => {
       itemSub.remove();
       openSub.remove();
@@ -112,7 +130,7 @@ export default function App() {
             menuId: '',
             title: 'App',
             items: [
-              { menuItemId: 'about', title: 'About' },
+              { menuItemId: 'about', title: 'About', symbol: 'info.circle' },
               { menuItemId: 'sep1', separator: true },
               {
                 menuItemId: 'quit',
@@ -124,23 +142,104 @@ export default function App() {
           },
         },
         {
-          menuItemId: 'custom',
-          title: 'Custom',
+          menuItemId: 'file',
+          title: 'File',
           submenu: {
             menuId: '',
-            title: 'Custom',
+            title: 'File',
             items: [
               {
-                menuItemId: 'hello',
-                title: 'Hello World',
-                key: 'h',
-                keyModifiers: ['command', 'shift'],
+                menuItemId: 'new',
+                title: 'New',
+                key: 'n',
+                keyModifiers: ['command'],
+                symbol: 'doc.badge.plus',
               },
-              { menuItemId: 'checked', title: 'Checked Item', state: 'on' },
               {
-                menuItemId: 'withTip',
-                title: 'Hover Me',
-                toolTip: 'This has a tooltip!',
+                menuItemId: 'open',
+                title: 'Open',
+                key: 'o',
+                keyModifiers: ['command'],
+                symbol: 'folder',
+              },
+              { menuItemId: 'sep2', separator: true },
+              {
+                menuItemId: 'save',
+                title: 'Save',
+                key: 's',
+                keyModifiers: ['command'],
+                image: 'NSActionTemplate',
+              },
+              {
+                menuItemId: 'saveAs',
+                title: 'Save As…',
+                key: 's',
+                keyModifiers: ['command', 'shift'],
+                alternate: true,
+              },
+              { menuItemId: 'sep3', separator: true },
+              {
+                menuItemId: 'recent',
+                title: 'Recent Files',
+                submenu: {
+                  menuId: '',
+                  title: 'Recent Files',
+                  items: [
+                    {
+                      menuItemId: 'r1',
+                      title: 'report.pdf',
+                      indentationLevel: 1,
+                    },
+                    {
+                      menuItemId: 'r2',
+                      title: 'notes.txt',
+                      indentationLevel: 1,
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        {
+          menuItemId: 'view',
+          title: 'View',
+          submenu: {
+            menuId: '',
+            title: 'View',
+            items: [
+              {
+                menuItemId: 'sidebar',
+                title: 'Show Sidebar',
+                state: 'on',
+                symbol: 'sidebar.left',
+                key: 's',
+                keyModifiers: ['command', 'control'],
+              },
+              {
+                menuItemId: 'toolbar',
+                title: 'Show Toolbar',
+                state: 'off',
+                symbol: 'menubar.rectangle',
+              },
+              {
+                menuItemId: 'inspector',
+                title: 'Inspector',
+                state: 'mixed',
+                symbol: 'info.circle',
+              },
+              { menuItemId: 'sep4', separator: true },
+              { menuItemId: 'hidden1', title: 'Hidden Item', hidden: true },
+              {
+                menuItemId: 'disabled1',
+                title: 'Disabled Item',
+                enabled: false,
+                toolTip: 'This item is disabled',
+              },
+              {
+                menuItemId: 'tipped',
+                title: 'Hover for Tip',
+                toolTip: 'Hello from a tooltip!',
               },
             ],
           },
@@ -156,15 +255,12 @@ export default function App() {
 
   const doUpdateMenu = () => {
     if (!menu) return;
-    // Update the first submenu we find
     const firstSub = menu.items.find((i) => i.submenu);
     if (!firstSub?.submenu) {
-      addLine('No submenu found to update');
+      addLine('No submenu found');
       return;
     }
-    NSMenu.updateMenu(firstSub.submenu.menuId, {
-      title: 'Updated ' + Date.now().toString(36),
-    })
+    NSMenu.updateMenu(firstSub.submenu.menuId, { title: randTitle() })
       .then(() => {
         addLine('updateMenu: done');
         fetchMenu();
@@ -176,14 +272,16 @@ export default function App() {
     if (!menu) return;
     const firstSub = menu.items.find((i) => i.submenu);
     if (!firstSub?.submenu) {
-      addLine('No submenu found to add item to');
+      addLine('No submenu found');
       return;
     }
     NSMenu.addMenuItem(firstSub.submenu.menuId, {
       menuItemId: '',
-      title: 'Added ' + Date.now().toString(36),
+      title: randTitle(),
       key: 'n',
-      keyModifiers: ['command'],
+      keyModifiers: ['command', 'option'],
+      symbol: 'star.fill',
+      toolTip: 'Dynamically added',
     })
       .then(() => {
         addLine('addMenuItem: done');
@@ -192,23 +290,45 @@ export default function App() {
       .catch((e) => addLine(`ERROR addMenuItem: ${e}`));
   };
 
+  const doAddSeparator = () => {
+    if (!menu) return;
+    const firstSub = menu.items.find((i) => i.submenu);
+    if (!firstSub?.submenu) {
+      addLine('No submenu found');
+      return;
+    }
+    NSMenu.addMenuItem(firstSub.submenu.menuId, {
+      menuItemId: '',
+      separator: true,
+    })
+      .then(() => {
+        addLine('addSeparator: done');
+        fetchMenu();
+      })
+      .catch((e) => addLine(`ERROR addSeparator: ${e}`));
+  };
+
   const doUpdateMenuItem = () => {
     if (!menu) return;
-    // Find the first non-separator leaf item in any submenu
     const firstSub = menu.items.find((i) => i.submenu);
     const target = firstSub?.submenu?.items.find(
       (i) => !i.separator && !i.submenu
     );
     if (!target) {
-      addLine('No menu item found to update');
+      addLine('No item to update');
       return;
     }
+    const newState =
+      target.state === 'on' ? 'off' : target.state === 'mixed' ? 'on' : 'mixed';
     NSMenu.updateMenuItem(target.menuItemId, {
-      title: 'Modified ' + Date.now().toString(36),
-      state: target.state === 'on' ? 'off' : 'on',
+      title: randTitle(),
+      state: newState,
+      symbol: 'pencil.circle.fill',
+      toolTip: `State: ${newState}`,
+      enabled: true,
     })
       .then(() => {
-        addLine(`updateMenuItem: ${target.menuItemId} done`);
+        addLine(`updateMenuItem: done (state→${newState})`);
         fetchMenu();
       })
       .catch((e) => addLine(`ERROR updateMenuItem: ${e}`));
@@ -219,13 +339,13 @@ export default function App() {
     const firstSub = menu.items.find((i) => i.submenu);
     const items = firstSub?.submenu?.items;
     if (!items || items.length === 0) {
-      addLine('No menu item to remove');
+      addLine('No item to remove');
       return;
     }
     const target = items[items.length - 1]!;
     NSMenu.removeMenuItem(target.menuItemId)
       .then(() => {
-        addLine(`removeMenuItem: ${target.menuItemId} done`);
+        addLine(`removeMenuItem: done`);
         fetchMenu();
       })
       .catch((e) => addLine(`ERROR removeMenuItem: ${e}`));
@@ -239,6 +359,7 @@ export default function App() {
         <Button title='Set Menu' onPress={doSetMainMenu} />
         <Button title='Update Menu' onPress={doUpdateMenu} />
         <Button title='Add Item' onPress={doAddMenuItem} />
+        <Button title='Add Separator' onPress={doAddSeparator} />
         <Button title='Update Item' onPress={doUpdateMenuItem} />
         <Button title='Remove Item' onPress={doRemoveMenuItem} />
       </View>
@@ -290,4 +411,5 @@ const styles = StyleSheet.create({
   separator: { height: 1, backgroundColor: '#ddd', marginVertical: 4 },
   symbol: { fontSize: 11, color: '#007AFF' },
   check: { fontSize: 13, color: '#007AFF' },
+  tip: { fontSize: 11, color: '#888' },
 });
