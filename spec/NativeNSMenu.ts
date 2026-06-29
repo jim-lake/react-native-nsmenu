@@ -6,13 +6,17 @@ export type MenuItemId = string;
 export type MenuId = string;
 
 export interface MenuItemUpdate {
-  title: string;
+  title?: string;
   key?: string;
   keyModifiers?: Array<'shift' | 'control' | 'option' | 'command'>;
   enabled?: boolean;
   hidden?: boolean;
   state?: 'off' | 'on' | 'mixed';
   separator?: boolean;
+  image?: string;
+  toolTip?: string;
+  indentationLevel?: number;
+  alternate?: boolean;
   submenu?: Object;
 }
 export interface MenuItem extends MenuItemUpdate {
