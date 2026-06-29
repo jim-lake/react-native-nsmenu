@@ -15,26 +15,33 @@ static std::string ptrId(void *ptr) { return std::to_string((uintptr_t)ptr); }
 }
 
 - (void)start {
-  [self _installDelegates:NSApp.mainMenu];
+  [self installDelegatesOnMenu:NSApp.mainMenu];
 }
 
 - (void)stop {
   [self _removeDelegates:NSApp.mainMenu];
 }
 
-- (void)_installDelegates:(NSMenu *)menu {
+- (void)installDelegatesOnMenu:(NSMenu *)menu {
   if (!menu) {
     return;
   }
   menu.delegate = self;
   for (NSMenuItem *item in menu.itemArray) {
-    if (item.submenu) {
-      [self _installDelegates:item.submenu];
-    }
-    if (!item.isSeparatorItem && item.action == nil) {
-      item.target = self;
-      item.action = @selector(_menuItemClicked:);
-    }
+    [self installDelegatesOnItem:item];
+  }
+}
+
+- (void)installDelegatesOnItem:(NSMenuItem *)item {
+  if (!item) {
+    return;
+  }
+  if (!item.isSeparatorItem && item.action == nil) {
+    item.target = self;
+    item.action = @selector(_menuItemClicked:);
+  }
+  if (item.submenu) {
+    [self installDelegatesOnMenu:item.submenu];
   }
 }
 

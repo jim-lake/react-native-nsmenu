@@ -14,5 +14,7 @@ class RNNSMenu;
 + (instancetype)shared;
 - (void)start;
 - (void)stop;
+- (void)installDelegatesOnMenu:(NSMenu *)menu;
+- (void)installDelegatesOnItem:(NSMenuItem *)item;
 
 @end

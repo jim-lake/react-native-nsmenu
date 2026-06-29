@@ -71,10 +71,9 @@ export default function App() {
     NSMenu.getMainMenu()
       .then((m) => {
         addLine(`getMainMenu: ${m.items.length} top-level items`);
-        console.log('MainMenu:', JSON.stringify(m, null, 2));
         setMenu(m);
       })
-      .catch(console.error);
+      .catch((e) => addLine(`ERROR: ${e}`));
   };
 
   useEffect(() => {
@@ -101,10 +100,148 @@ export default function App() {
     };
   }, []);
 
+  const doSetMainMenu = () => {
+    NSMenu.setMainMenu({
+      menuId: '',
+      title: '',
+      items: [
+        {
+          menuItemId: 'app',
+          title: 'App',
+          submenu: {
+            menuId: '',
+            title: 'App',
+            items: [
+              { menuItemId: 'about', title: 'About' },
+              { menuItemId: 'sep1', separator: true },
+              {
+                menuItemId: 'quit',
+                title: 'Quit',
+                key: 'q',
+                keyModifiers: ['command'],
+              },
+            ],
+          },
+        },
+        {
+          menuItemId: 'custom',
+          title: 'Custom',
+          submenu: {
+            menuId: '',
+            title: 'Custom',
+            items: [
+              {
+                menuItemId: 'hello',
+                title: 'Hello World',
+                key: 'h',
+                keyModifiers: ['command', 'shift'],
+              },
+              { menuItemId: 'checked', title: 'Checked Item', state: 'on' },
+              {
+                menuItemId: 'withTip',
+                title: 'Hover Me',
+                toolTip: 'This has a tooltip!',
+              },
+            ],
+          },
+        },
+      ],
+    })
+      .then(() => {
+        addLine('setMainMenu: done');
+        fetchMenu();
+      })
+      .catch((e) => addLine(`ERROR setMainMenu: ${e}`));
+  };
+
+  const doUpdateMenu = () => {
+    if (!menu) return;
+    // Update the first submenu we find
+    const firstSub = menu.items.find((i) => i.submenu);
+    if (!firstSub?.submenu) {
+      addLine('No submenu found to update');
+      return;
+    }
+    NSMenu.updateMenu(firstSub.submenu.menuId, {
+      title: 'Updated ' + Date.now().toString(36),
+    })
+      .then(() => {
+        addLine('updateMenu: done');
+        fetchMenu();
+      })
+      .catch((e) => addLine(`ERROR updateMenu: ${e}`));
+  };
+
+  const doAddMenuItem = () => {
+    if (!menu) return;
+    const firstSub = menu.items.find((i) => i.submenu);
+    if (!firstSub?.submenu) {
+      addLine('No submenu found to add item to');
+      return;
+    }
+    NSMenu.addMenuItem(firstSub.submenu.menuId, {
+      menuItemId: '',
+      title: 'Added ' + Date.now().toString(36),
+      key: 'n',
+      keyModifiers: ['command'],
+    })
+      .then(() => {
+        addLine('addMenuItem: done');
+        fetchMenu();
+      })
+      .catch((e) => addLine(`ERROR addMenuItem: ${e}`));
+  };
+
+  const doUpdateMenuItem = () => {
+    if (!menu) return;
+    // Find the first non-separator leaf item in any submenu
+    const firstSub = menu.items.find((i) => i.submenu);
+    const target = firstSub?.submenu?.items.find(
+      (i) => !i.separator && !i.submenu
+    );
+    if (!target) {
+      addLine('No menu item found to update');
+      return;
+    }
+    NSMenu.updateMenuItem(target.menuItemId, {
+      title: 'Modified ' + Date.now().toString(36),
+      state: target.state === 'on' ? 'off' : 'on',
+    })
+      .then(() => {
+        addLine(`updateMenuItem: ${target.menuItemId} done`);
+        fetchMenu();
+      })
+      .catch((e) => addLine(`ERROR updateMenuItem: ${e}`));
+  };
+
+  const doRemoveMenuItem = () => {
+    if (!menu) return;
+    const firstSub = menu.items.find((i) => i.submenu);
+    const items = firstSub?.submenu?.items;
+    if (!items || items.length === 0) {
+      addLine('No menu item to remove');
+      return;
+    }
+    const target = items[items.length - 1]!;
+    NSMenu.removeMenuItem(target.menuItemId)
+      .then(() => {
+        addLine(`removeMenuItem: ${target.menuItemId} done`);
+        fetchMenu();
+      })
+      .catch((e) => addLine(`ERROR removeMenuItem: ${e}`));
+  };
+
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <Text style={styles.title}>NSMenu Example</Text>
-      <Button title='Refresh' onPress={fetchMenu} />
+      <View style={styles.buttons}>
+        <Button title='Refresh' onPress={fetchMenu} />
+        <Button title='Set Menu' onPress={doSetMainMenu} />
+        <Button title='Update Menu' onPress={doUpdateMenu} />
+        <Button title='Add Item' onPress={doAddMenuItem} />
+        <Button title='Update Item' onPress={doUpdateMenuItem} />
+        <Button title='Remove Item' onPress={doRemoveMenuItem} />
+      </View>
       <LogBox />
       {menu && (
         <View style={styles.menuBar}>
@@ -121,6 +258,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   container: { padding: 20, paddingBottom: 60 },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 12 },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   menuBar: { marginTop: 16 },
   menu: {
     marginBottom: 12,
