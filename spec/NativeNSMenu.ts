@@ -14,6 +14,7 @@ export interface MenuItemUpdate {
   state?: 'off' | 'on' | 'mixed';
   separator?: boolean;
   image?: string;
+  symbol?: string;
   toolTip?: string;
   indentationLevel?: number;
   alternate?: boolean;
